@@ -89,21 +89,23 @@
             </div>
         </header>
 
-        <!-- 主要內容區 -->
-        <main class="flex-1 max-w-[96rem] w-full mx-auto px-6 py-6 space-y-6">
+        <!-- 主要內容區：左右雙欄佈局 (左側為部門選單，右側為主畫面) -->
+        <main class="flex-1 max-w-[104rem] w-full mx-auto px-6 py-6 flex flex-col lg:flex-row gap-6 items-start">
             
-            <!-- 1. 最上方：部門列表切換 -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200">
-                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">🏭 選擇部門工作表</div>
-                <nav id="department-tabs" class="flex flex-wrap gap-2">
-                    <!-- 動態生成部門標籤 -->
+            <!-- 左側欄：各部門工作表清單 -->
+            <aside class="w-full lg:w-64 bg-white rounded-xl shadow-sm p-4 border border-slate-200 shrink-0 sticky top-6">
+                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center space-x-1.5">
+                    <span>🏭</span><span>選擇部門工作表</span>
+                </div>
+                <nav id="department-tabs" class="flex flex-col space-y-1.5">
+                    <!-- 動態生成部門垂直導覽 -->
                 </nav>
-            </div>
+            </aside>
 
-            <!-- 主排版區 -->
-            <div class="space-y-6">
+            <!-- 右側主畫面內容 -->
+            <div class="flex-1 w-full space-y-6 min-w-0">
                 
-                <!-- 2. 上方：個人技能矩陣總覽統計 (含全廠/部門下拉選單) -->
+                <!-- 1. 個人技能矩陣總覽統計 (含全廠/部門下拉選單) -->
                 <div id="export-card-matrix" class="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
                     <div class="flex flex-wrap justify-between items-center mb-4 pb-3 border-b border-slate-100 gap-3">
                         <div class="flex items-center space-x-3">
@@ -124,7 +126,7 @@
                     </div>
                 </div>
 
-                <!-- 3. 合併為同一橫軸：左側平均分數 + 右側線上編輯表單 -->
+                <!-- 2. 同一橫軸：左側平均分數 + 右側線上編輯人員評分表單 -->
                 <div class="bg-gradient-to-r from-blue-50 via-slate-50 to-indigo-50 rounded-xl shadow-sm p-4 border border-blue-100 flex flex-col xl:flex-row items-center justify-between gap-4">
                     
                     <!-- 左側：整體平均技術熟練度評分 -->
@@ -133,7 +135,7 @@
                         <span class="font-extrabold text-blue-600 text-lg" id="avg-score-value">2.62 分 / 4.0 分</span>
                     </div>
 
-                    <!-- 右側：線上編輯人員評分表單 (緊接在分數右側) -->
+                    <!-- 右側：線上編輯人員評分表單 -->
                     <form id="skill-form" onsubmit="saveSkillData(event)" class="flex flex-wrap items-end gap-2.5 w-full xl:w-auto flex-1 justify-end">
                         <div class="min-w-[120px] flex-1">
                             <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">人員代號 / 姓名</label>
@@ -174,7 +176,7 @@
                     </form>
                 </div>
 
-                <!-- 4. 下方：部門詳細技能矩陣表 (視覺最大化) -->
+                <!-- 3. 下方：部門詳細技能矩陣表 (視覺最大化) -->
                 <div id="export-card-table" class="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
                     <div class="flex flex-wrap justify-between items-center mb-5 pb-3 border-b border-slate-100 gap-3">
                         <div class="flex items-center space-x-2">
@@ -289,7 +291,7 @@
             tabsContainer.innerHTML = '';
             departments.forEach(dept => {
                 const btn = document.createElement('button');
-                btn.className = `px-4 py-2 text-xs font-semibold rounded-lg transition ${dept === currentDept ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`;
+                btn.className = `w-full text-left px-3 py-2 text-xs font-semibold rounded-lg transition ${dept === currentDept ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-700 hover:bg-slate-100'}`;
                 btn.innerText = dept;
                 btn.onclick = () => {
                     currentDept = dept;
@@ -384,7 +386,6 @@
                 </div>
             `;
 
-            // 同步更新橫軸左側的分數與標籤
             document.getElementById('avg-score-label').innerText = `📊 [${currentSummaryScope}] 平均熟練度：`;
             document.getElementById('avg-score-value').innerText = `${avgScore} 分 / 4.0 分`;
         }
