@@ -124,56 +124,57 @@
                     </div>
                 </div>
 
-                <!-- 3. 中間：線上編輯人員評分表單 -->
-                <div class="bg-gradient-to-r from-blue-50 via-slate-50 to-indigo-50 rounded-xl shadow-sm p-5 border border-blue-100">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 id="form-title" class="text-sm font-bold text-slate-800 flex items-center space-x-1.5">
-                            <span>✍️</span><span>線上編輯人員評分表單（點擊下方矩陣列表可帶入或直接新增）</span>
-                        </h3>
-                        <span class="text-xs text-blue-700 font-medium bg-blue-100 px-2 py-0.5 rounded">數值範圍: 1 ~ 4</span>
-                    </div>
+                <!-- 3. 合併為同一橫軸：左側平均分數 + 右側線上編輯表單 -->
+                <div class="bg-gradient-to-r from-blue-50 via-slate-50 to-indigo-50 rounded-xl shadow-sm p-4 border border-blue-100 flex flex-col xl:flex-row items-center justify-between gap-4">
                     
-                    <form id="skill-form" onsubmit="saveSkillData(event)" class="flex flex-wrap items-end gap-3">
-                        <div class="flex-1 min-w-[140px]">
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">人員代號 / 姓名</label>
-                            <input type="text" id="input-person" required placeholder="例如：A, B, 員工姓名" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    <!-- 左側：整體平均技術熟練度評分 -->
+                    <div id="avg-score-box" class="bg-white px-5 py-3 rounded-lg border border-slate-200 shadow-sm flex items-center space-x-4 w-full xl:w-auto min-w-[280px] justify-between xl:justify-start">
+                        <span class="text-xs font-bold text-slate-700 whitespace-nowrap" id="avg-score-label">📊 [全廠] 平均熟練度：</span>
+                        <span class="font-extrabold text-blue-600 text-lg" id="avg-score-value">2.62 分 / 4.0 分</span>
+                    </div>
+
+                    <!-- 右側：線上編輯人員評分表單 (緊接在分數右側) -->
+                    <form id="skill-form" onsubmit="saveSkillData(event)" class="flex flex-wrap items-end gap-2.5 w-full xl:w-auto flex-1 justify-end">
+                        <div class="min-w-[120px] flex-1">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">人員代號 / 姓名</label>
+                            <input type="text" id="input-person" required placeholder="例如：A, B" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none">
                         </div>
-                        <div class="w-20">
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">技能 a</label>
-                            <input type="number" min="1" max="4" id="input-skill-a" required class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-center">
+                        <div class="w-14 text-center">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">技能a</label>
+                            <input type="number" min="1" max="4" id="input-skill-a" required class="w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-center">
                         </div>
-                        <div class="w-20">
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">技能 b</label>
-                            <input type="number" min="1" max="4" id="input-skill-b" required class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-center">
+                        <div class="w-14 text-center">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">技能b</label>
+                            <input type="number" min="1" max="4" id="input-skill-b" required class="w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-center">
                         </div>
-                        <div class="w-20">
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">技能 c</label>
-                            <input type="number" min="1" max="4" id="input-skill-c" required class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-center">
+                        <div class="w-14 text-center">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">技能c</label>
+                            <input type="number" min="1" max="4" id="input-skill-c" required class="w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-center">
                         </div>
-                        <div class="w-20">
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">技能 d</label>
-                            <input type="number" min="1" max="4" id="input-skill-d" required class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-center">
+                        <div class="w-14 text-center">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">技能d</label>
+                            <input type="number" min="1" max="4" id="input-skill-d" required class="w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-center">
                         </div>
-                        <div class="w-20">
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">技能 e</label>
-                            <input type="number" min="1" max="4" id="input-skill-e" required class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-center">
+                        <div class="w-14 text-center">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">技能e</label>
+                            <input type="number" min="1" max="4" id="input-skill-e" required class="w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-center">
                         </div>
-                        <div class="w-20">
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">技能 f</label>
-                            <input type="number" min="1" max="4" id="input-skill-f" required class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-center">
+                        <div class="w-14 text-center">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">技能f</label>
+                            <input type="number" min="1" max="4" id="input-skill-f" required class="w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-center">
                         </div>
-                        <div class="w-20">
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">技能 g</label>
-                            <input type="number" min="1" max="4" id="input-skill-g" required class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm text-center">
+                        <div class="w-14 text-center">
+                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">技能g</label>
+                            <input type="number" min="1" max="4" id="input-skill-g" required class="w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-center">
                         </div>
-                        <div class="flex items-center space-x-2 pt-1">
-                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-semibold shadow-sm transition">儲存更新</button>
-                            <button type="button" onclick="resetForm()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition">重設</button>
+                        <div class="flex items-center space-x-1.5">
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-md text-xs font-semibold shadow-sm transition">儲存</button>
+                            <button type="button" onclick="resetForm()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-md text-xs font-medium transition">重設</button>
                         </div>
                     </form>
                 </div>
 
-                <!-- 4. 下方：部門詳細技能矩陣表 (技能等級標準已移至右側標題列)[cite: 6] -->
+                <!-- 4. 下方：部門詳細技能矩陣表 (視覺最大化) -->
                 <div id="export-card-table" class="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
                     <div class="flex flex-wrap justify-between items-center mb-5 pb-3 border-b border-slate-100 gap-3">
                         <div class="flex items-center space-x-2">
@@ -181,7 +182,7 @@
                             <h3 id="current-dept-title" class="text-base font-bold text-slate-900">部門詳細技能矩陣表</h3>
                         </div>
                         
-                        <!-- 技能等級標準 (已移至表格右側標題列)[cite: 6] -->
+                        <!-- 技能等級標準 -->
                         <div class="flex flex-wrap items-center gap-3 text-xs text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
                             <span class="font-bold text-slate-900">💡 技能等級標準：</span>
                             <div class="flex items-center space-x-1"><span class="pie-chart pie-1" style="width:18px;height:18px;"></span><span><b>1:</b> 訓練中</span></div>
@@ -363,29 +364,29 @@
             const avgScore = totalEntries > 0 ? (totalScores / totalEntries).toFixed(2) : 0;
             const summaryDiv = document.getElementById('matrix-summary');
             summaryDiv.innerHTML = `
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-center">
-                    <div class="bg-blue-50/60 p-4 rounded-xl border border-blue-100 flex items-center justify-center space-x-3 shadow-sm">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div class="bg-blue-50/60 p-3 rounded-xl border border-blue-100 flex items-center justify-center space-x-3 shadow-sm">
                         <span class="pie-chart pie-1"></span>
-                        <div class="text-left"><div class="text-xs text-blue-700 font-bold">1: 訓練中</div><div class="text-lg font-extrabold text-blue-900">${levelCounts[1]} 項</div></div>
+                        <div class="text-left"><div class="text-[11px] text-blue-700 font-bold">1: 訓練中</div><div class="text-base font-extrabold text-blue-900">${levelCounts[1]} 項</div></div>
                     </div>
-                    <div class="bg-blue-50/60 p-4 rounded-xl border border-blue-100 flex items-center justify-center space-x-3 shadow-sm">
+                    <div class="bg-blue-50/60 p-3 rounded-xl border border-blue-100 flex items-center justify-center space-x-3 shadow-sm">
                         <span class="pie-chart pie-2"></span>
-                        <div class="text-left"><div class="text-xs text-blue-700 font-bold">2: 獨立作業</div><div class="text-lg font-extrabold text-blue-900">${levelCounts[2]} 項</div></div>
+                        <div class="text-left"><div class="text-[11px] text-blue-700 font-bold">2: 獨立作業</div><div class="text-base font-extrabold text-blue-900">${levelCounts[2]} 項</div></div>
                     </div>
-                    <div class="bg-blue-50/60 p-4 rounded-xl border border-blue-100 flex items-center justify-center space-x-3 shadow-sm">
+                    <div class="bg-blue-50/60 p-3 rounded-xl border border-blue-100 flex items-center justify-center space-x-3 shadow-sm">
                         <span class="pie-chart pie-3"></span>
-                        <div class="text-left"><div class="text-xs text-blue-700 font-bold">3: 技術熟練</div><div class="text-lg font-extrabold text-blue-900">${levelCounts[3]} 項</div></div>
+                        <div class="text-left"><div class="text-[11px] text-blue-700 font-bold">3: 技術熟練</div><div class="text-base font-extrabold text-blue-900">${levelCounts[3]} 項</div></div>
                     </div>
-                    <div class="bg-blue-50/60 p-4 rounded-xl border border-blue-100 flex items-center justify-center space-x-3 shadow-sm">
+                    <div class="bg-blue-50/60 p-3 rounded-xl border border-blue-100 flex items-center justify-center space-x-3 shadow-sm">
                         <span class="pie-chart pie-4"></span>
-                        <div class="text-left"><div class="text-xs text-blue-700 font-bold">4: 導師級</div><div class="text-lg font-extrabold text-blue-900">${levelCounts[4]} 項</div></div>
+                        <div class="text-left"><div class="text-[11px] text-blue-700 font-bold">4: 導師級</div><div class="text-base font-extrabold text-blue-900">${levelCounts[4]} 項</div></div>
                     </div>
-                </div>
-                <div class="text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200 flex justify-between items-center font-semibold">
-                    <span>📊 [${currentSummaryScope}] 整體平均技術熟練度評分：</span>
-                    <span class="font-bold text-blue-600 text-xl">${avgScore} 分 / 4.0 分</span>
                 </div>
             `;
+
+            // 同步更新橫軸左側的分數與標籤
+            document.getElementById('avg-score-label').innerText = `📊 [${currentSummaryScope}] 平均熟練度：`;
+            document.getElementById('avg-score-value').innerText = `${avgScore} 分 / 4.0 分`;
         }
 
         window.exportAllExcel = function() {
@@ -491,12 +492,10 @@
             document.getElementById('input-skill-e').value = skills.e;
             document.getElementById('input-skill-f').value = skills.f;
             document.getElementById('input-skill-g').value = skills.g;
-            document.getElementById('form-title').innerHTML = `<span>✍️</span><span>正在編輯人員：<strong class="text-blue-600">${person}</strong></span>`;
         }
 
         window.resetForm = function() {
             document.getElementById('skill-form').reset();
-            document.getElementById('form-title').innerHTML = `<span>✍️</span><span>線上編輯人員評分表單（點擊下方矩陣列表可帶入或直接新增）</span>`;
         }
 
         window.saveSkillData = async function(event) {
