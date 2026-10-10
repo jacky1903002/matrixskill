@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工廠個人技能矩陣表系統</title>
+    <!-- Tailwind CSS 樣式與字型 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 引入 SheetJS (xlsx) 用於 Excel 匯出入 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- 引入 html2canvas 用於匯出高畫質 PNG -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <!-- 登入驗證遮罩層 -->
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">工廠技能矩陣系統登入</h2>
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">電子郵件帳號</label>
+                    <input type="email" id="login-email" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">密碼</label>
+                    <input type="password" id="login-password" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div id="login-error" class="text-red-500 text-sm hidden"></div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-medium">登入系統</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 主應用程式介面 -->
+    <div id="app-container" class="flex-1 flex flex-col hidden">
+        <!-- 頂端導覽列 -->
+        <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">🏭</span>
+                <h1 class="text-xl font-bold text-gray-800">工廠個人技能矩陣表系統</h1>
+            </div>
+            
+            <!-- 功能按鈕群組：匯出入 Excel -->
+            <div class="flex items-center space-x-3">
+                <button onclick="exportAllExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-sm font-medium transition flex items-center space-x-1">
+                    <span>📥</span><span>匯出所有 Excel</span>
+                </button>
+                <label class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-sm font-medium transition cursor-pointer flex items-center space-x-1">
+                    <span>📤</span><span>匯入所有 Excel</span>
+                    <input type="file" id="excel-file-input" accept=".xlsx, .xls" class="hidden" onchange="importAllExcel(event)">
+                </label>
+            </div>
+
+            <div class="flex items-center space-x-6 text-sm text-gray-600">
+                <div class="flex items-center space-x-2">
+                    <span id="connection-dot" class="w-3 h-3 rounded-full bg-gray-400"></span>
+                    <span id="connection-status">連線檢查中...</span>
+                </div>
+                <div>最後更新：<span id="last-update-time" class="font-medium text-gray-800">-</span></div>
+                <div class="flex items-center space-x-3 border-l pl-4 border-gray-300">
+                    <span id="user-email" class="font-medium text-gray-700"></span>
+                    <button onclick="handleLogout()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded text-xs transition">登出</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主要內容區 -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
+            
+            <!-- 等級說明卡片 -->
+            <div class="bg-white rounded-lg shadow p-4 border border-gray-200 flex flex-wrap items-center justify-around gap-4 text-sm">
+                <div class="font-bold text-gray-700">技能等級標準：</div>
+                <div class="flex items-center space-x-2"><span class="px-2 py-0.5 bg-red-100 text-red-800 rounded font-bold">1</span><span>訓練中</span></div>
+                <div class="flex items-center space-x-2"><span class="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded font-bold">2</span><span>能獨立作業</span></div>
+                <div class="flex items-center space-x-2"><span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold">3</span><span>技術熟練</span></div>
+                <div class="flex items-center space-x-2"><span class="px-2 py-0.5 bg-green-100 text-green-800 rounded font-bold">4</span><span>導師級</span></div>
+            </div>
+
+            <!-- 部門標籤頁切換 -->
+            <div class="border-b border-gray-200">
+                <nav id="department-tabs" class="flex flex-wrap -mb-px gap-2 pb-2">
+                    <!-- 動態生成部門按鈕 -->
+                </nav>
+            </div>
+
+            <!-- 內容顯示區 -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- 左側：資料維護 / 編輯表單 -->
+                <div class="bg-white rounded-lg shadow p-6 border border-gray-200 lg:col-span-1">
+                    <h2 id="form-title" class="text-lg font-bold text-gray-800 mb-4 pb-2 border-b">編輯人員技能評分</h2>
+                    <form id="skill-form" onsubmit="saveSkillData(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">人員代號 / 姓名</label>
+                            <input type="text" id="input-person" required placeholder="例如：A, B, C 或 員工姓名" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">技能項目 a</label>
+                                <input type="number" min="1" max="4" id="input-skill-a" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">技能項目 b</label>
+                                <input type="number" min="1" max="4" id="input-skill-b" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">技能項目 c</label>
+                                <input type="number" min="1" max="4" id="input-skill-c" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">技能項目 d</label>
+                                <input type="number" min="1" max="4" id="input-skill-d" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">技能項目 e</label>
+                                <input type="number" min="1" max="4" id="input-skill-e" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">技能項目 f</label>
+                                <input type="number" min="1" max="4" id="input-skill-f" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">技能項目 g</label>
+                            <input type="number" min="1" max="4" id="input-skill-g" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        </div>
+                        <div class="flex space-x-2 pt-2">
+                            <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition font-medium">儲存 / 更新資料</button>
+                            <button type="button" onclick="resetForm()" class="bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-md transition">清除</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 右側：上方工作表資料與下方矩陣分析 (含個別的 PNG 匯出按鈕) -->
+                <div class="space-y-6 lg:col-span-2">
+                    
+                    <!-- 上方：各工作表詳細表格區塊 (含匯出 PNG 按鈕) -->
+                    <div id="export-card-table" class="bg-white rounded-lg shadow p-6 border border-gray-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 id="current-dept-title" class="text-lg font-bold text-gray-800">部門詳細表格</h3>
+                            <div class="flex items-center space-x-3">
+                                <span class="text-xs text-gray-500 hidden sm:inline">點擊列表人員可帶入編輯</span>
+                                <button onclick="exportElementAsPNG('export-card-table', '部門詳細表格')" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1 rounded text-xs transition flex items-center space-x-1">
+                                    <span>📸</span><span>匯出表格 PNG</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 text-center text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-2 font-semibold text-gray-600">人員/技能</th>
+                                        <th class="px-4 py-2 font-semibold text-gray-600">a</th>
+                                        <th class="px-4 py-2 font-semibold text-gray-600">b</th>
+                                        <th class="px-4 py-2 font-semibold text-gray-600">c</th>
+                                        <th class="px-4 py-2 font-semibold text-gray-600">d</th>
+                                        <th class="px-4 py-2 font-semibold text-gray-600">e</th>
+                                        <th class="px-4 py-2 font-semibold text-gray-600">f</th>
+                                        <th class="px-4 py-2 font-semibold text-gray-600">g</th>
+                                        <th class="px-4 py-2 font-semibold text-gray-600">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dept-table-body" class="divide-y divide-gray-200">
+                                    <!-- 動態載入 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 下方：個人技能矩陣統計區塊 (含匯出 PNG 按鈕) -->
+                    <div id="export-card-matrix" class="bg-white rounded-lg shadow p-6 border border-gray-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-gray-800">下方生成：全廠/部門個人技能矩陣總覽</h3>
+                            <button onclick="exportElementAsPNG('export-card-matrix', '個人技能矩陣總覽')" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1 rounded text-xs transition flex items-center space-x-1">
+                                <span>📸</span><span>匯出矩陣 PNG</span>
+                            </button>
+                        </div>
+                        <div id="matrix-summary" class="text-sm text-gray-600 space-y-2">
+                            <!-- 動態生成統計分析 -->
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Firebase SDK 引入 (Modular v10) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, set, get, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBtsm0u-J6a82rM2Htisv3aqIewycYp3Go",
+            authDomain: "matrixskil.firebaseapp.com",
+            databaseURL: "https://matrixskil-default-rtdb.firebaseio.com",
+            projectId: "matrixskil",
+            storageBucket: "matrixskil.firebasestorage.app",
+            messagingSenderId: "502292823971",
+            appId: "1:502292823971:web:2af2c88e765f84f3d56416",
+            measurementId: "G-SYKYYQT58E"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        const departments = [
+            '金屬一課', '石墨銑床課', '線切割課', '車床課', 
+            '金屬二課', '金屬三課', '後處理', '製造五部', 
+            '乾式製程課', '濕式製程課', '產品開發部'
+        ];
+
+        const defaultData = {
+            "金屬一課": { "A": {a:1, b:4, c:1, d:1, e:4, f:4, g:3}, "B": {a:3, b:2, c:4, d:3, e:3, f:3, g:2}, "C": {a:1, b:4, c:2, d:3, e:1, f:2, g:1}, "D": {a:3, b:1, c:2, d:1, e:4, f:1, g:4}, "E": {a:4, b:1, c:1, d:4, e:4, f:4, g:3}, "F": {a:2, b:4, c:3, d:3, e:1, f:2, g:1}, "G": {a:1, b:2, c:2, d:3, e:4, f:2, g:4} },
+            "石墨銑床課": { "A": {a:3, b:3, c:4, d:3, e:1, f:4, g:3}, "B": {a:3, b:4, c:4, d:4, e:4, f:2, g:3}, "C": {a:3, b:1, c:3, d:2, e:3, f:4, g:3}, "D": {a:3, b:1, c:1, d:2, e:3, f:1, g:1}, "E": {a:4, b:2, c:3, d:2, e:2, f:3, g:3}, "F": {a:1, b:4, c:3, d:4, e:2, f:3, g:2}, "G": {a:2, b:2, c:2, d:1, e:4, f:4, g:4} },
+            "線切割課": { "A": {a:2, b:4, c:2, d:3, e:4, f:3, g:2}, "B": {a:4, b:1, c:4, d:2, e:3, f:3, g:2}, "C": {a:3, b:4, c:2, d:1, e:2, f:1, g:2}, "D": {a:1, b:2, c:1, d:4, e:3, f:2, g:3}, "E": {a:2, b:4, c:1, d:1, e:1, f:3, g:4}, "F": {a:2, b:3, c:1, d:2, e:4, f:4, g:4}, "G": {a:3, b:1, c:3, d:2, e:3, f:1, g:3} },
+            "車床課": { "A": {a:2, b:1, c:2, d:2, e:4, f:2, g:1}, "B": {a:1, b:1, c:1, d:3, e:4, f:4, g:3}, "C": {a:1, b:3, c:1, d:4, e:3, f:1, g:3}, "D": {a:1, b:2, c:1, d:1, e:2, f:4, g:4}, "E": {a:2, b:4, c:3, d:4, e:4, f:3, g:3}, "F": {a:4, b:4, c:4, d:1, e:1, f:2, g:2}, "G": {a:2, b:4, c:3, d:1, e:1, f:1, g:2} },
+            "金屬二課": { "A": {a:4, b:4, c:1, d:4, e:4, f:4, g:3}, "B": {a:3, b:2, c:1, d:4, e:4, f:4, g:3}, "C": {a:1, b:1, c:3, d:3, e:4, f:4, g:3}, "D": {a:3, b:1, c:2, d:4, e:1, f:1, g:3}, "E": {a:3, b:1, c:3, d:2, e:3, f:4, g:1}, "F": {a:4, b:4, c:1, d:4, e:2, f:1, g:3}, "G": {a:4, b:2, c:4, d:1, e:4, f:3, g:1} },
+            "金屬三課": { "A": {a:4, b:4, c:3, d:4, e:3, f:4, g:3}, "B": {a:3, b:3, c:3, d:4, e:3, f:3, g:1}, "C": {a:3, b:1, c:2, d:4, e:4, f:3, g:1}, "D": {a:3, b:2, c:1, d:1, e:3, f:1, g:2}, "E": {a:3, b:3, c:2, d:4, e:2, f:4, g:4}, "F": {a:4, b:1, c:3, d:3, e:3, f:1, g:3}, "G": {a:3, b:1, c:2, d:3, e:1, f:2, g:2} },
+            "後處理": { "A": {a:3, b:1, c:4, d:2, e:3, f:1, g:2}, "B": {a:3, b:1, c:4, d:3, e:4, f:3, g:2}, "C": {a:3, b:1, c:2, d:2, e:3, f:2, g:4}, "D": {a:1, b:1, c:3, d:2, e:4, f:4, g:4}, "E": {a:4, b:4, c:4, d:1, e:3, f:4, g:3}, "F": {a:3, b:2, c:4, d:1, e:4, f:1, g:3}, "G": {a:3, b:3, c:4, d:2, e:3, f:4, g:1} },
+            "製造五部": { "A": {a:4, b:4, c:3, d:4, e:2, f:4, g:4}, "B": {a:4, b:4, c:4, d:4, e:3, f:3, g:1}, "C": {a:4, b:4, c:4, d:4, e:4, f:4, g:1}, "D": {a:1, b:1, c:2, d:4, e:1, f:3, g:4}, "E": {a:1, b:3, c:3, d:3, e:1, f:4, g:1}, "F": {a:3, b:4, c:1, d:4, e:1, f:3, g:4}, "G": {a:2, b:2, c:3, d:4, e:4, f:3, g:1} },
+            "乾式製程課": { "A": {a:4, b:2, c:2, d:4, e:3, f:1, g:2}, "B": {a:4, b:2, c:1, d:4, e:4, f:2, g:4}, "C": {a:4, b:4, c:1, d:3, e:1, f:1, g:2}, "D": {a:4, b:3, c:1, d:2, e:1, f:1, g:2}, "E": {a:4, b:2, c:4, d:1, e:1, f:4, g:3}, "F": {a:4, b:2, c:2, d:1, e:4, f:3, g:1}, "G": {a:1, b:1, c:2, d:1, e:2, f:3, g:1} },
+            "濕式製程課": { "A": {a:4, b:4, c:4, d:3, e:4, f:2, g:2}, "B": {a:2, b:3, c:1, d:2, e:3, f:2, g:2}, "C": {a:2, b:1, c:4, d:2, e:3, f:4, g:3}, "D": {a:1, b:1, c:1, d:4, e:1, f:3, g:1}, "E": {a:4, b:4, c:3, d:2, e:2, f:4, g:3}, "F": {a:2, b:4, c:2, d:2, e:4, f:4, g:4}, "G": {a:4, b:1, c:2, d:1, e:2, f:3, g:4} },
+            "產品開發部": { "A": {a:3, b:2, c:3, d:3, e:3, f:2, g:4}, "B": {a:1, b:3, c:2, d:1, e:4, f:2, g:3}, "C": {a:4, b:4, c:1, d:2, e:3, f:2, g:2}, "D": {a:4, b:3, c:4, d:3, e:2, f:2, g:1}, "E": {a:3, b:3, c:2, d:1, e:4, f:1, g:1}, "F": {a:3, b:4, c:3, d:2, e:3, f:2, g:4}, "G": {a:3, b:3, c:3, d:1, e:4, f:2, g:1} }
+        };
+
+        let currentDept = departments[0];
+        let globalSkillsData = {};
+
+        function renderTabs() {
+            const tabsContainer = document.getElementById('department-tabs');
+            tabsContainer.innerHTML = '';
+            departments.forEach(dept => {
+                const btn = document.createElement('button');
+                btn.className = `px-4 py-2 text-sm font-medium rounded-t-lg transition ${dept === currentDept ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`;
+                btn.innerText = dept;
+                btn.onclick = () => {
+                    currentDept = dept;
+                    renderTabs();
+                    renderDeptTable();
+                };
+                tabsContainer.appendChild(btn);
+            });
+            document.getElementById('current-dept-title').innerText = `${currentDept} - 詳細技能表格`;
+        }
+
+        window.renderDeptTable = function() {
+            renderTabs();
+            const tbody = document.getElementById('dept-table-body');
+            tbody.innerHTML = '';
+            
+            const deptData = globalSkillsData[currentDept] || {};
+            
+            if (Object.keys(deptData).length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="py-4 text-gray-400">尚無資料</td></tr>`;
+                document.getElementById('matrix-summary').innerHTML = `<p class="text-gray-400">目前無統計資料</p>`;
+                return;
+            }
+
+            let levelCounts = {1: 0, 2: 0, 3: 0, 4: 0};
+            let totalScores = 0;
+            let totalEntries = 0;
+
+            for (const [person, skills] of Object.entries(deptData)) {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50 cursor-pointer';
+                tr.onclick = () => fillForm(person, skills);
+                
+                let rowHtml = `<td class="px-4 py-2 font-medium text-gray-800 bg-gray-50">${person}</td>`;
+                ['a', 'b', 'c', 'd', 'e', 'f', 'g'].forEach(k => {
+                    const val = skills[k] || 1;
+                    levelCounts[val]++;
+                    totalScores += val;
+                    totalEntries++;
+                    
+                    let badgeColor = 'bg-gray-100 text-gray-800';
+                    if (val === 1) badgeColor = 'bg-red-100 text-red-800';
+                    if (val === 2) badgeColor = 'bg-yellow-100 text-yellow-800';
+                    if (val === 3) badgeColor = 'bg-blue-100 text-blue-800';
+                    if (val === 4) badgeColor = 'bg-green-100 text-green-800';
+
+                    rowHtml += `<td class="px-4 py-2"><span class="px-2 py-1 rounded text-xs font-bold ${badgeColor}">${val}</span></td>`;
+                });
+                rowHtml += `<td class="px-4 py-2 text-xs text-blue-600 hover:underline" onclick="event.stopPropagation(); deleteSkill('${person}')">刪除</td>`;
+                tr.innerHTML = rowHtml;
+                tbody.appendChild(tr);
+            }
+
+            const avgScore = totalEntries > 0 ? (totalScores / totalEntries).toFixed(2) : 0;
+            const summaryDiv = document.getElementById('matrix-summary');
+            summaryDiv.innerHTML = `
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-center">
+                    <div class="bg-red-50 p-3 rounded-lg border border-red-100">
+                        <div class="text-xs text-red-600 font-semibold">1: 訓練中</div>
+                        <div class="text-xl font-bold text-red-700">${levelCounts[1]} 項</div>
+                    </div>
+                    <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+                        <div class="text-xs text-yellow-600 font-semibold">2: 能獨立作業</div>
+                        <div class="text-xl font-bold text-yellow-700">${levelCounts[2]} 項</div>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                        <div class="text-xs text-blue-600 font-semibold">3: 技術熟練</div>
+                        <div class="text-xl font-bold text-blue-700">${levelCounts[3]} 項</div>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded-lg border border-green-100">
+                        <div class="text-xs text-green-600 font-semibold">4: 導師級</div>
+                        <div class="text-xl font-bold text-green-700">${levelCounts[4]} 項</div>
+                    </div>
+                </div>
+                <div class="text-gray-700 bg-gray-50 p-3 rounded-md flex justify-between items-center">
+                    <span>📊 ${currentDept} 整體平均技術熟練度評分：</span>
+                    <span class="font-bold text-blue-600 text-lg">${avgScore} 分 / 4.0 分</span>
+                </div>
+            `;
+        }
+
+        // ================= 需求 1 & 2 & 3: Excel 匯出與匯入功能 =================
+        
+        // 1. 一鍵匯出所有 Excel
+        window.exportAllExcel = function() {
+            const wb = XLSX.utils.book_new();
+            departments.forEach(dept => {
+                const deptData = globalSkillsData[dept] || {};
+                const rows = [];
+                for (const [person, skills] of Object.entries(deptData)) {
+                    rows.push({
+                        "人員/技能": person,
+                        "a": skills.a,
+                        "b": skills.b,
+                        "c": skills.c,
+                        "d": skills.d,
+                        "e": skills.e,
+                        "f": skills.f,
+                        "g": skills.g
+                    });
+                }
+                const ws = XLSX.utils.json_to_sheet(rows.length > 0 ? rows : [{"人員/技能": "範例", "a":1, "b":1, "c":1, "d":1, "e":1, "f":1, "g":1}]);
+                XLSX.utils.book_append_sheet(wb, ws, dept);
+            });
+            XLSX.writeFile(wb, "工廠個人技能矩陣表_完整資料.xlsx");
+        }
+
+        // 2 & 3. 一鍵匯入所有 Excel (比對工作表名稱)
+        window.importAllExcel = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    let importedData = JSON.parse(JSON.stringify(globalSkillsData));
+                    let matchCount = 0;
+
+                    workbook.SheetNames.forEach(sheetName => {
+                        // 依據需求 3: 比對各工作表名稱，名稱相符則匯入資料
+                        if (departments.includes(sheetName)) {
+                            const worksheet = workbook.Sheets[sheetName];
+                            const json = XLSX.utils.sheet_to_json(worksheet);
+                            
+                            let deptMap = {};
+                            json.forEach(row => {
+                                // 支援標準欄位名稱對應
+                                const personKey = row["人員/技能"] || row["人員"] || row["Name"];
+                                if (personKey) {
+                                    deptMap[personKey] = {
+                                        a: parseInt(row["a"] || 1),
+                                        b: parseInt(row["b"] || 1),
+                                        c: parseInt(row["c"] || 1),
+                                        d: parseInt(row["d"] || 1),
+                                        e: parseInt(row["e"] || 1),
+                                        f: parseInt(row["f"] || 1),
+                                        g: parseInt(row["g"] || 1)
+                                    };
+                                }
+                            });
+
+                            if (Object.keys(deptMap).length > 0) {
+                                importedData[sheetName] = deptMap;
+                                matchCount++;
+                            }
+                        }
+                    });
+
+                    if (matchCount > 0) {
+                        await set(ref(db, 'skills'), importedData);
+                        await set(ref(db, 'lastUpdated'), serverTimestamp());
+                        alert(`成功匯入！共比對並更新了 ${matchCount} 個相符的工作表。`);
+                    } else {
+                        alert('匯入失敗：上傳的 Excel 中沒有任何工作表名稱與系統的 11 個部門相符！');
+                    }
+                } catch (err) {
+                    alert('解析 Excel 檔案發生錯誤： ' + err.message);
+                } finally {
+                    event.target.value = ''; // 清空檔案選擇器
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ================= 需求 4: 每個圖表/區塊增加一鍵匯出高畫質 PNG =================
+        window.exportElementAsPNG = function(elementId, titleName) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            // 使用 html2canvas 產生高畫質圖片
+            html2canvas(element, { scale: 3, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${currentDept}_${titleName}_${new Date().toISOString().slice(0,10)}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                alert('匯出圖片失敗： ' + err.message);
+            });
+        }
+
+        window.fillForm = function(person, skills) {
+            document.getElementById('input-person').value = person;
+            document.getElementById('input-skill-a').value = skills.a;
+            document.getElementById('input-skill-b').value = skills.b;
+            document.getElementById('input-skill-c').value = skills.c;
+            document.getElementById('input-skill-d').value = skills.d;
+            document.getElementById('input-skill-e').value = skills.e;
+            document.getElementById('input-skill-f').value = skills.f;
+            document.getElementById('input-skill-g').value = skills.g;
+            document.getElementById('form-title').innerText = `編輯人員：${person}`;
+        }
+
+        window.resetForm = function() {
+            document.getElementById('skill-form').reset();
+            document.getElementById('form-title').innerText = '編輯人員技能評分';
+        }
+
+        window.saveSkillData = async function(event) {
+            event.preventDefault();
+            const person = document.getElementById('input-person').value.trim();
+            const skills = {
+                a: parseInt(document.getElementById('input-skill-a').value),
+                b: parseInt(document.getElementById('input-skill-b').value),
+                c: parseInt(document.getElementById('input-skill-c').value),
+                d: parseInt(document.getElementById('input-skill-d').value),
+                e: parseInt(document.getElementById('input-skill-e').value),
+                f: parseInt(document.getElementById('input-skill-f').value),
+                g: parseInt(document.getElementById('input-skill-g').value)
+            };
+
+            const path = `skills/${currentDept}/${person}`;
+            try {
+                await set(ref(db, path), skills);
+                await set(ref(db, 'lastUpdated'), serverTimestamp());
+                alert('資料儲存成功！');
+                resetForm();
+            } catch (error) {
+                alert('儲存失敗： ' + error.message);
+            }
+        }
+
+        window.deleteSkill = async function(person) {
+            if (confirm(`確定要刪除 ${person} 的資料嗎？`)) {
+                try {
+                    await set(ref(db, `skills/${currentDept}/${person}`), null);
+                    await set(ref(db, 'lastUpdated'), serverTimestamp());
+                } catch (error) {
+                    alert('刪除失敗： ' + error.message);
+                }
+            }
+        }
+
+        window.handleLogin = async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorDiv = document.getElementById('login-error');
+            errorDiv.classList.add('hidden');
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                document.getElementById('login-modal').classList.add('hidden');
+            } catch (error) {
+                errorDiv.innerText = '登入失敗：帳號或密碼錯誤';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        window.handleLogout = async function() {
+            await signOut(auth);
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            const loginModal = document.getElementById('login-modal');
+            const appContainer = document.getElementById('app-container');
+            const userEmailSpan = document.getElementById('user-email');
+
+            if (user) {
+                loginModal.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                userEmailSpan.innerText = user.email;
+
+                const dataRef = ref(db, 'skills');
+                const snapshot = await get(dataRef);
+                if (!snapshot.exists()) {
+                    await set(dataRef, defaultData);
+                    await set(ref(db, 'lastUpdated'), serverTimestamp());
+                }
+
+                onValue(dataRef, (snapshot) => {
+                    globalSkillsData = snapshot.val() || {};
+                    renderDeptTable();
+                });
+
+                onValue(ref(db, 'lastUpdated'), (snapshot) => {
+                    const timestamp = snapshot.val();
+                    if (timestamp) {
+                        const date = new Date(timestamp);
+                        document.getElementById('last-update-time').innerText = date.toLocaleString('zh-TW');
+                    } else {
+                        document.getElementById('last-update-time').innerText = new Date().toLocaleString('zh-TW');
+                    }
+                });
+
+            } else {
+                appContainer.classList.add('hidden');
+                loginModal.classList.remove('hidden');
+            }
+        });
+
+        onValue(ref(db, '.info/connected'), (snap) => {
+            const connected = snap.val();
+            const dot = document.getElementById('connection-dot');
+            const statusText = document.getElementById('connection-status');
+            if (connected) {
+                dot.className = 'w-3 h-3 rounded-full bg-green-500 animate-pulse';
+                statusText.innerText = '線上連線中';
+            } else {
+                dot.className = 'w-3 h-3 rounded-full bg-red-500';
+                statusText.innerText = '連線中斷';
+            }
+        });
+    </script>
+</body>
+</html>
