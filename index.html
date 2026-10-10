@@ -100,15 +100,6 @@
                 </nav>
             </div>
 
-            <!-- 等級說明卡片 -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200 flex flex-wrap items-center justify-around gap-4 text-xs font-medium text-slate-700">
-                <div class="font-bold text-slate-900 flex items-center space-x-1.5"><span>💡</span><span>技能等級標準：</span></div>
-                <div class="flex items-center space-x-2 bg-blue-50/50 px-3 py-1.5 rounded-lg border border-blue-100"><span class="pie-chart pie-1"></span><span><b>1:</b> 訓練中</span></div>
-                <div class="flex items-center space-x-2 bg-blue-50/50 px-3 py-1.5 rounded-lg border border-blue-100"><span class="pie-chart pie-2"></span><span><b>2:</b> 能獨立作業</span></div>
-                <div class="flex items-center space-x-2 bg-blue-50/50 px-3 py-1.5 rounded-lg border border-blue-100"><span class="pie-chart pie-3"></span><span><b>3:</b> 技術熟練</span></div>
-                <div class="flex items-center space-x-2 bg-blue-50/50 px-3 py-1.5 rounded-lg border border-blue-100"><span class="pie-chart pie-4"></span><span><b>4:</b> 導師級</span></div>
-            </div>
-
             <!-- 主排版區 -->
             <div class="space-y-6">
                 
@@ -182,13 +173,23 @@
                     </form>
                 </div>
 
-                <!-- 4. 下方：部門詳細技能矩陣表 -->
+                <!-- 4. 下方：部門詳細技能矩陣表 (技能等級標準已移至右側標題列)[cite: 6] -->
                 <div id="export-card-table" class="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-                    <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+                    <div class="flex flex-wrap justify-between items-center mb-5 pb-3 border-b border-slate-100 gap-3">
                         <div class="flex items-center space-x-2">
                             <span class="w-3 h-6 bg-blue-600 rounded-sm"></span>
                             <h3 id="current-dept-title" class="text-base font-bold text-slate-900">部門詳細技能矩陣表</h3>
                         </div>
+                        
+                        <!-- 技能等級標準 (已移至表格右側標題列)[cite: 6] -->
+                        <div class="flex flex-wrap items-center gap-3 text-xs text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                            <span class="font-bold text-slate-900">💡 技能等級標準：</span>
+                            <div class="flex items-center space-x-1"><span class="pie-chart pie-1" style="width:18px;height:18px;"></span><span><b>1:</b> 訓練中</span></div>
+                            <div class="flex items-center space-x-1"><span class="pie-chart pie-2" style="width:18px;height:18px;"></span><span><b>2:</b> 能獨立作業</span></div>
+                            <div class="flex items-center space-x-1"><span class="pie-chart pie-3" style="width:18px;height:18px;"></span><span><b>3:</b> 技術熟練</span></div>
+                            <div class="flex items-center space-x-1"><span class="pie-chart pie-4" style="width:18px;height:18px;"></span><span><b>4:</b> 導師級</span></div>
+                        </div>
+
                         <div class="flex items-center space-x-3">
                             <span class="text-xs text-slate-400 bg-slate-50 px-2.5 py-1 rounded border border-slate-100">💡 點擊下方表格任一列可載入資料到上方進行編輯</span>
                             <button onclick="exportElementAsPNG('export-card-table', '部門詳細矩陣表')" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1 shadow-sm">
@@ -264,12 +265,11 @@
         };
 
         let currentDept = departments[0];
-        let currentSummaryScope = '全廠'; // 預設統計範圍
+        let currentSummaryScope = '全廠';
         let globalSkillsData = {};
 
         function initSummarySelect() {
             const select = document.getElementById('summary-scope-select');
-            // 保留「全廠」，動態填入各部門
             let optionsHtml = `<option value="全廠">🌐 全廠總計</option>`;
             departments.forEach(dept => {
                 optionsHtml += `<option value="${dept}">${dept}</option>`;
@@ -331,14 +331,12 @@
             renderSummary();
         }
 
-        // 獨立渲染矩陣總覽統計
         function renderSummary() {
             let levelCounts = {1: 0, 2: 0, 3: 0, 4: 0};
             let totalScores = 0;
             let totalEntries = 0;
 
             if (currentSummaryScope === '全廠') {
-                // 計算全廠所有部門
                 departments.forEach(dept => {
                     const deptData = globalSkillsData[dept] || {};
                     for (const person of Object.values(deptData)) {
@@ -351,7 +349,6 @@
                     }
                 });
             } else {
-                // 計算特定部門
                 const deptData = globalSkillsData[currentSummaryScope] || {};
                 for (const person of Object.values(deptData)) {
                     ['a', 'b', 'c', 'd', 'e', 'f', 'g'].forEach(k => {
@@ -391,7 +388,6 @@
             `;
         }
 
-        // 匯出 Excel
         window.exportAllExcel = function() {
             const wb = XLSX.utils.book_new();
             departments.forEach(dept => {
@@ -415,7 +411,6 @@
             XLSX.writeFile(wb, "工廠個人技能矩陣表_完整資料.xlsx");
         }
 
-        // 匯入 Excel (比對工作表名稱)
         window.importAllExcel = function(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -473,7 +468,6 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // 匯出 PNG
         window.exportElementAsPNG = function(elementId, titleName) {
             const element = document.getElementById(elementId);
             if (!element) return;
