@@ -250,12 +250,15 @@
                 return;
             }
 
-            // 動態找出該部門所有員工出現過的技能名稱聯集，確保欄位完整
-            let skillKeySet = new Set();
+            // 收集該部門所有員工的技能名稱聯集
+            let skillNameSet = new Set();
             persons.forEach(person => {
-                Object.keys(deptData[person] || {}).forEach(k => skillKeySet.add(k));
+                const personObj = deptData[person];
+                if (personObj && personObj.skills) {
+                    personObj.skills.forEach(s => skillNameSet.add(s.name));
+                }
             });
-            const skillKeys = Array.from(skillKeySet);
+            const skillKeys = Array.from(skillNameSet);
 
             // 動態產生表頭 HTML
             let headHtml = `<tr><th class="px-4 py-3 text-left">人員 / 技能代號</th>`;
@@ -267,18 +270,20 @@
 
             // 動態產生表格內容
             persons.forEach(person => {
-                const skills = deptData[person];
+                const personObj = deptData[person] || {};
+                const skillsList = personObj.skills || [];
+                let skillMap = {};
+                skillsList.forEach(s => { skillMap[s.name] = s.level; });
+
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition';
                 
                 let rowHtml = `<td class="px-4 py-3 font-bold text-slate-800 bg-slate-50 text-left">${person}</td>`;
                 skillKeys.forEach(k => {
-                    const val = skills[k];
-                    if (val !== undefined && val !== null && !isNaN(val)) {
-                        const numVal = parseInt(val);
-                        rowHtml += `<td class="px-4 py-3"><span class="pie-chart pie-${numVal}" title="${k}：等級 ${numVal}"></span></td>`;
+                    const val = skillMap[k];
+                    if (val !== undefined && !isNaN(val)) {
+                        rowHtml += `<td class="px-4 py-3"><span class="pie-chart pie-${val}" title="${k}：等級 ${val}"></span></td>`;
                     } else {
-                        // 該員工無此項技能評分時顯示空白或預設
                         rowHtml += `<td class="px-4 py-3 text-slate-300">-</td>`;
                     }
                 });
@@ -299,14 +304,16 @@
             
             targetDepts.forEach(dept => {
                 const deptData = globalSkillsData[dept] || {};
-                for (const personData of Object.values(deptData)) {
-                    for (const valStr of Object.values(personData)) {
-                        const val = parseInt(valStr);
-                        if (val >= 1 && val <= 4) {
-                            levelCounts[val]++;
-                            totalScores += val;
-                            totalEntries++;
-                        }
+                for (const personObj of Object.values(deptData)) {
+                    if (personObj && personObj.skills) {
+                        personObj.skills.forEach(s => {
+                            const val = parseInt(s.level);
+                            if (val >= 1 && val <= 4) {
+                                levelCounts[val]++;
+                                totalScores += val;
+                                totalEntries++;
+                            }
+                        });
                     }
                 }
             });
@@ -343,9 +350,13 @@
             departments.forEach(dept => {
                 const deptData = globalSkillsData[dept] || {};
                 const rows = [];
-                for (const [person, skills] of Object.entries(deptData)) {
+                for (const [person, personObj] of Object.entries(deptData)) {
                     let rowObj = { "人員/技能": person };
-                    Object.assign(rowObj, skills);
+                    if (personObj && personObj.skills) {
+                        personObj.skills.forEach(s => {
+                            rowObj[s.name] = s.level;
+                        });
+                    }
                     rows.push(rowObj);
                 }
                 const ws = XLSX.utils.json_to_sheet(rows.length > 0 ? rows : [{"人員/技能": "範例"}]);
@@ -376,18 +387,20 @@
                             json.forEach(row => {
                                 const personKey = row["人員/技能"] || row["人員"] || row["Name"];
                                 if (personKey) {
-                                    let skillObj = {};
+                                    let skillsArray = [];
                                     Object.keys(row).forEach(col => {
                                         if (col !== "人員/技能" && col !== "人員" && col !== "Name") {
                                             let val = parseInt(row[col]);
-                                            // 嚴格過濾 1~4 的有效評分，無效或空白則不寫入
                                             if (!isNaN(val) && val >= 1 && val <= 4) {
-                                                skillObj[col] = val;
+                                                skillsArray.push({
+                                                    name: col.trim(),
+                                                    level: val
+                                                });
                                             }
                                         }
                                     });
-                                    if (Object.keys(skillObj).length > 0) {
-                                        deptMap[String(personKey).trim()] = skillObj;
+                                    if (skillsArray.length > 0) {
+                                        deptMap[String(personKey).trim()] = { skills: skillsArray };
                                     }
                                 }
                             });
@@ -474,7 +487,6 @@
 
                 const dataRef = ref(db, 'skills');
                 
-                // 僅監聽資料庫變更，不再自動寫入預設空結構覆蓋您的資料
                 onValue(dataRef, (snapshot) => {
                     globalSkillsData = snapshot.val() || {};
                     renderDeptTable();
