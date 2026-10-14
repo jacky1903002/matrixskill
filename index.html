@@ -74,6 +74,9 @@
                     <span>📤</span><span>匯入 Excel 總表</span>
                     <input type="file" id="excel-file-input" accept=".xlsx, .xls" class="hidden" onchange="importAllExcel(event)">
                 </label>
+                <button onclick="resetCloudData()" class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold shadow-sm transition flex items-center space-x-1.5">
+                    <span>🔄</span><span>清除雲端舊快取</span>
+                </button>
             </div>
 
             <div class="flex items-center space-x-5 text-xs text-slate-600">
@@ -175,7 +178,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getDatabase, ref, set, get, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, get, onValue, serverTimestamp, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBtsm0u-J6a82rM2Htisv3aqIewycYp3Go",
@@ -358,6 +361,18 @@
             XLSX.writeFile(wb, "工廠個人技能矩陣表_完整資料.xlsx");
         }
 
+        window.resetCloudData = async function() {
+            if (confirm("確定要清除雲端舊快取資料嗎？清除後您可以重新上傳完整的 Excel 總表。")) {
+                try {
+                    await remove(ref(db, 'skills'));
+                    await set(ref(db, 'lastUpdated'), serverTimestamp());
+                    alert("已成功清除雲端舊資料！請點擊「匯入 Excel 總表」重新上傳。");
+                } catch (err) {
+                    alert("清除失敗：" + err.message);
+                }
+            }
+        }
+
         window.importAllExcel = function(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -383,7 +398,6 @@
                                     let skillObj = {};
                                     Object.keys(row).forEach(col => {
                                         if (col !== "人員/技能" && col !== "人員" && col !== "Name") {
-                                            // 將含有 Firebase 不允許的特殊字元進行安全替換，或直接保持乾淨
                                             let safeCol = String(col).trim();
                                             let val = parseInt(row[col]);
                                             if (!isNaN(val) && val >= 1 && val <= 4) {
@@ -405,11 +419,11 @@
                     });
 
                     if (matchCount > 0) {
-                        // 為避免 Firebase key 包含特殊字元 (. # $ / [ ]) 報錯，將整包資料透過安全處理
-                        // 實際上若欄位名稱包含點號，可進一步處理，此處我們主要確保正確存取
+                        // 先完全覆寫舊資料庫內容，確保舊的 a, b, c 殘留結構被清掉
+                        await set(ref(db, 'skills'), null);
                         await set(ref(db, 'skills'), importedData);
                         await set(ref(db, 'lastUpdated'), serverTimestamp());
-                        alert(`成功匯入！共比對並更新了 ${matchCount} 個部門工作表。`);
+                        alert(`成功匯入！共更新了 ${matchCount} 個部門工作表。`);
                     } else {
                         alert('匯入失敗：上傳的 Excel 中沒有任何工作表名稱與系統的 12 個部門相符！');
                     }
@@ -511,7 +525,7 @@
                 statusText.innerText = '線上連線中';
             } else {
                 dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
-                statusText.innerText = '連線中斷';
+                statusTest.innerText = '連線中斷';
             }
         });
     </script>
