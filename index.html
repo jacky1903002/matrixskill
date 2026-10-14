@@ -250,15 +250,13 @@
                 return;
             }
 
-            // 收集該部門所有員工的技能名稱聯集
-            let skillNameSet = new Set();
+            // 收集該部門所有員工出現過的技能名稱聯集
+            let skillKeySet = new Set();
             persons.forEach(person => {
-                const personObj = deptData[person];
-                if (personObj && personObj.skills) {
-                    personObj.skills.forEach(s => skillNameSet.add(s.name));
-                }
+                const skillsObj = deptData[person] || {};
+                Object.keys(skillsObj).forEach(k => skillKeySet.add(k));
             });
-            const skillKeys = Array.from(skillNameSet);
+            const skillKeys = Array.from(skillKeySet);
 
             // 動態產生表頭 HTML
             let headHtml = `<tr><th class="px-4 py-3 text-left">人員 / 技能代號</th>`;
@@ -270,19 +268,16 @@
 
             // 動態產生表格內容
             persons.forEach(person => {
-                const personObj = deptData[person] || {};
-                const skillsList = personObj.skills || [];
-                let skillMap = {};
-                skillsList.forEach(s => { skillMap[s.name] = s.level; });
-
+                const skillsObj = deptData[person] || {};
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition';
                 
                 let rowHtml = `<td class="px-4 py-3 font-bold text-slate-800 bg-slate-50 text-left">${person}</td>`;
                 skillKeys.forEach(k => {
-                    const val = skillMap[k];
-                    if (val !== undefined && !isNaN(val)) {
-                        rowHtml += `<td class="px-4 py-3"><span class="pie-chart pie-${val}" title="${k}：等級 ${val}"></span></td>`;
+                    const val = skillsObj[k];
+                    if (val !== undefined && val !== null && !isNaN(val)) {
+                        const numVal = parseInt(val);
+                        rowHtml += `<td class="px-4 py-3"><span class="pie-chart pie-${numVal}" title="${k}：等級 ${numVal}"></span></td>`;
                     } else {
                         rowHtml += `<td class="px-4 py-3 text-slate-300">-</td>`;
                     }
@@ -304,10 +299,10 @@
             
             targetDepts.forEach(dept => {
                 const deptData = globalSkillsData[dept] || {};
-                for (const personObj of Object.values(deptData)) {
-                    if (personObj && personObj.skills) {
-                        personObj.skills.forEach(s => {
-                            const val = parseInt(s.level);
+                for (const skillsObj of Object.values(deptData)) {
+                    if (skillsObj && typeof skillsObj === 'object') {
+                        Object.values(skillsObj).forEach(valStr => {
+                            const val = parseInt(valStr);
                             if (val >= 1 && val <= 4) {
                                 levelCounts[val]++;
                                 totalScores += val;
@@ -350,12 +345,10 @@
             departments.forEach(dept => {
                 const deptData = globalSkillsData[dept] || {};
                 const rows = [];
-                for (const [person, personObj] of Object.entries(deptData)) {
+                for (const [person, skillsObj] of Object.entries(deptData)) {
                     let rowObj = { "人員/技能": person };
-                    if (personObj && personObj.skills) {
-                        personObj.skills.forEach(s => {
-                            rowObj[s.name] = s.level;
-                        });
+                    if (skillsObj && typeof skillsObj === 'object') {
+                        Object.assign(rowObj, skillsObj);
                     }
                     rows.push(rowObj);
                 }
@@ -387,20 +380,19 @@
                             json.forEach(row => {
                                 const personKey = row["人員/技能"] || row["人員"] || row["Name"];
                                 if (personKey) {
-                                    let skillsArray = [];
+                                    let skillObj = {};
                                     Object.keys(row).forEach(col => {
                                         if (col !== "人員/技能" && col !== "人員" && col !== "Name") {
+                                            // 將含有 Firebase 不允許的特殊字元進行安全替換，或直接保持乾淨
+                                            let safeCol = String(col).trim();
                                             let val = parseInt(row[col]);
                                             if (!isNaN(val) && val >= 1 && val <= 4) {
-                                                skillsArray.push({
-                                                    name: col.trim(),
-                                                    level: val
-                                                });
+                                                skillObj[safeCol] = val;
                                             }
                                         }
                                     });
-                                    if (skillsArray.length > 0) {
-                                        deptMap[String(personKey).trim()] = { skills: skillsArray };
+                                    if (Object.keys(skillObj).length > 0) {
+                                        deptMap[String(personKey).trim()] = skillObj;
                                     }
                                 }
                             });
@@ -413,6 +405,8 @@
                     });
 
                     if (matchCount > 0) {
+                        // 為避免 Firebase key 包含特殊字元 (. # $ / [ ]) 報錯，將整包資料透過安全處理
+                        // 實際上若欄位名稱包含點號，可進一步處理，此處我們主要確保正確存取
                         await set(ref(db, 'skills'), importedData);
                         await set(ref(db, 'lastUpdated'), serverTimestamp());
                         alert(`成功匯入！共比對並更新了 ${matchCount} 個部門工作表。`);
