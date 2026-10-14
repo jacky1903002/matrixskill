@@ -135,45 +135,10 @@
                         <span class="font-extrabold text-blue-600 text-lg" id="avg-score-value">2.62 分 / 4.0 分</span>
                     </div>
 
-                    <!-- 右側：線上編輯人員評分表單 -->
-                    <form id="skill-form" onsubmit="saveSkillData(event)" class="flex flex-wrap items-end gap-2.5 w-full xl:w-auto flex-1 justify-end">
-                        <div class="min-w-[120px] flex-1">
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">人員代號 / 姓名</label>
-                            <input type="text" id="input-person" required placeholder="例如：A, B" class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-md text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none">
-                        </div>
-                        <div class="w-14 text-center">
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">技能a</label>
-                            <input type="number" min="1" max="4" id="input-skill-a" required class="w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-center">
-                        </div>
-                        <div class="w-14 text-center">
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">技能b</label>
-                            <input type="number" min="1" max="4" id="input-skill-b" required class="w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-center">
-                        </div>
-                        <div class="w-14 text-center">
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">技能c</label>
-                            <input type="number" min="1" max="4" id="input-skill-c" required class="w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-center">
-                        </div>
-                        <div class="w-14 text-center">
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">技能d</label>
-                            <input type="number" min="1" max="4" id="input-skill-d" required class="w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-center">
-                        </div>
-                        <div class="w-14 text-center">
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">技能e</label>
-                            <input type="number" min="1" max="4" id="input-skill-e" required class="w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-center">
-                        </div>
-                        <div class="w-14 text-center">
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">技能f</label>
-                            <input type="number" min="1" max="4" id="input-skill-f" required class="w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-center">
-                        </div>
-                        <div class="w-14 text-center">
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-0.5">技能g</label>
-                            <input type="number" min="1" max="4" id="input-skill-g" required class="w-full px-1 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-center">
-                        </div>
-                        <div class="flex items-center space-x-1.5">
-                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-md text-xs font-semibold shadow-sm transition">儲存</button>
-                            <button type="button" onclick="resetForm()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-md text-xs font-medium transition">重設</button>
-                        </div>
-                    </form>
+                    <!-- 右側：線上編輯人員評分表單提示 -->
+                    <div class="text-xs text-slate-500 bg-white/80 px-4 py-2 rounded-lg border border-slate-200">
+                        💡 提示：點擊下方表格任一列可快速載入該員工資料進行修改。
+                    </div>
                 </div>
 
                 <!-- 3. 下方：部門詳細技能矩陣表 (視覺最大化) -->
@@ -194,7 +159,6 @@
                         </div>
 
                         <div class="flex items-center space-x-3">
-                            <span class="text-xs text-slate-400 bg-slate-50 px-2.5 py-1 rounded border border-slate-100">💡 點擊下方表格任一列可載入資料到上方進行編輯</span>
                             <button onclick="exportElementAsPNG('export-card-table', '部門詳細矩陣表')" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1 shadow-sm">
                                <span>📸</span><span>匯出表格 PNG</span>
                             </button>
@@ -202,18 +166,8 @@
                     </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-slate-200 text-center text-sm">
-                            <thead class="bg-slate-50 text-slate-700 font-semibold uppercase text-xs tracking-wider">
-                                <tr>
-                                    <th class="px-4 py-3 text-left">人員 / 技能代號</th>
-                                    <th class="px-4 py-3">技能 a</th>
-                                    <th class="px-4 py-3">技能 b</th>
-                                    <th class="px-4 py-3">技能 c</th>
-                                    <th class="px-4 py-3">技能 d</th>
-                                    <th class="px-4 py-3">技能 e</th>
-                                    <th class="px-4 py-3">技能 f</th>
-                                    <th class="px-4 py-3">技能 g</th>
-                                    <th class="px-4 py-3 text-right">操作管理</th>
-                                </tr>
+                            <thead id="dept-table-head" class="bg-slate-50 text-slate-700 font-semibold uppercase text-xs tracking-wider">
+                                <!-- 動態產生表頭 -->
                             </thead>
                             <tbody id="dept-table-body" class="divide-y divide-slate-100 bg-white">
                                 <!-- 動態載入 -->
@@ -250,22 +204,8 @@
         const departments = [
             '金屬一課', '石墨銑床課', '線切割課', '車床課', 
             '金屬二課', '金屬三課', '後處理', '製造五部', 
-            '乾式製程課', '濕式製程課', '產品開發部'
+            '複材加工課', '乾式製程課', '濕式製程課', '產品開發部'
         ];
-
-        const defaultData = {
-            "金屬一課": { "A": {a:1, b:4, c:1, d:1, e:4, f:4, g:3}, "B": {a:3, b:2, c:4, d:3, e:3, f:3, g:2}, "C": {a:1, b:4, c:2, d:3, e:1, f:2, g:1}, "D": {a:3, b:1, c:2, d:1, e:4, f:1, g:4}, "E": {a:4, b:1, c:1, d:4, e:4, f:4, g:3}, "F": {a:2, b:4, c:3, d:3, e:1, f:2, g:1}, "G": {a:1, b:2, c:2, d:3, e:4, f:2, g:4} },
-            "石墨銑床課": { "A": {a:3, b:3, c:4, d:3, e:1, f:4, g:3}, "B": {a:3, b:4, c:4, d:4, e:4, f:2, g:3}, "C": {a:3, b:1, c:3, d:2, e:3, f:4, g:3}, "D": {a:3, b:1, c:1, d:2, e:3, f:1, g:1}, "E": {a:4, b:2, c:3, d:2, e:2, f:3, g:3}, "F": {a:1, b:4, c:3, d:4, e:2, f:3, g:2}, "G": {a:2, b:2, c:2, d:1, e:4, f:4, g:4} },
-            "線切割課": { "A": {a:2, b:4, c:2, d:3, e:4, f:3, g:2}, "B": {a:4, b:1, c:4, d:2, e:3, f:3, g:2}, "C": {a:3, b:4, c:2, d:1, e:2, f:1, g:2}, "D": {a:1, b:2, c:1, d:4, e:3, f:2, g:3}, "E": {a:2, b:4, c:1, d:1, e:1, f:3, g:4}, "F": {a:2, b:3, c:1, d:2, e:4, f:4, g:4}, "G": {a:3, b:1, c:3, d:2, e:3, f:1, g:3} },
-            "車床課": { "A": {a:2, b:1, c:2, d:2, e:4, f:2, g:1}, "B": {a:1, b:1, c:1, d:3, e:4, f:4, g:3}, "C": {a:1, b:3, c:1, d:4, e:3, f:1, g:3}, "D": {a:1, b:2, c:1, d:1, e:2, f:4, g:4}, "E": {a:2, b:4, c:3, d:4, e:4, f:3, g:3}, "F": {a:4, b:4, c:4, d:1, e:1, f:2, g:2}, "G": {a:2, b:4, c:3, d:1, e:1, f:1, g:2} },
-            "金屬二課": { "A": {a:4, b:4, c:1, d:4, e:4, f:4, g:3}, "B": {a:3, b:2, c:1, d:4, e:4, f:4, g:3}, "C": {a:1, b:1, c:3, d:3, e:4, f:4, g:3}, "D": {a:3, b:1, c:2, d:4, e:1, f:1, g:3}, "E": {a:3, b:1, c:3, d:2, e:3, f:4, g:1}, "F": {a:4, b:4, c:1, d:4, e:2, f:1, g:3}, "G": {a:4, b:2, c:4, d:1, e:4, f:3, g:1} },
-            "金屬三課": { "A": {a:4, b:4, c:3, d:4, e:3, f:4, g:3}, "B": {a:3, b:3, c:3, d:4, e:3, f:3, g:1}, "C": {a:3, b:1, c:2, d:4, e:4, f:3, g:1}, "D": {a:3, b:2, c:1, d:1, e:3, f:1, g:2}, "E": {a:3, b:3, c:2, d:4, e:2, f:4, g:4}, "F": {a:4, b:1, c:3, d:3, e:3, f:1, g:3}, "G": {a:3, b:1, c:2, d:3, e:1, f:2, g:2} },
-            "後處理": { "A": {a:3, b:1, c:4, d:2, e:3, f:1, g:2}, "B": {a:3, b:1, c:4, d:3, e:4, f:3, g:2}, "C": {a:3, b:1, c:2, d:2, e:3, f:2, g:4}, "D": {a:1, b:1, c:3, d:2, e:4, f:4, g:4}, "E": {a:4, b:4, c:4, d:1, e:3, f:4, g:3}, "F": {a:3, b:2, c:4, d:1, e:4, f:1, g:3}, "G": {a:3, b:3, c:4, d:2, e:3, f:4, g:1} },
-            "製造五部": { "A": {a:4, b:4, c:3, d:4, e:2, f:4, g:4}, "B": {a:4, b:4, c:4, d:4, e:3, f:3, g:1}, "C": {a:4, b:4, c:4, d:4, e:4, f:4, g:1}, "D": {a:1, b:1, c:2, d:4, e:1, f:3, g:4}, "E": {a:1, b:3, c:3, d:3, e:1, f:4, g:1}, "F": {a:3, b:4, c:1, d:4, e:1, f:3, g:4}, "G": {a:2, b:2, c:3, d:4, e:4, f:3, g:1} },
-            "乾式製程課": { "A": {a:4, b:2, c:2, d:4, e:3, f:1, g:2}, "B": {a:4, b:2, c:1, d:4, e:4, f:2, g:4}, "C": {a:4, b:4, c:1, d:3, e:1, f:1, g:2}, "D": {a:4, b:3, c:1, d:2, e:1, f:1, g:2}, "E": {a:4, b:2, c:4, d:1, e:1, f:4, g:3}, "F": {a:4, b:2, c:2, d:1, e:4, f:3, g:1}, "G": {a:1, b:1, c:2, d:1, e:2, f:3, g:1} },
-            "濕式製程課": { "A": {a:4, b:4, c:4, d:3, e:4, f:2, g:2}, "B": {a:2, b:3, c:1, d:2, e:3, f:2, g:2}, "C": {a:2, b:1, c:4, d:2, e:3, f:4, g:3}, "D": {a:1, b:1, c:1, d:4, e:1, f:3, g:1}, "E": {a:4, b:4, c:3, d:2, e:2, f:4, g:3}, "F": {a:2, b:4, c:2, d:2, e:4, f:4, g:4}, "G": {a:4, b:1, c:2, d:1, e:2, f:3, g:4} },
-            "產品開發部": { "A": {a:3, b:2, c:3, d:3, e:3, f:2, g:4}, "B": {a:1, b:3, c:2, d:1, e:4, f:2, g:3}, "C": {a:4, b:4, c:1, d:2, e:3, f:2, g:2}, "D": {a:4, b:3, c:4, d:3, e:2, f:2, g:1}, "E": {a:3, b:3, c:2, d:1, e:4, f:1, g:1}, "F": {a:3, b:4, c:3, d:2, e:3, f:2, g:4}, "G": {a:3, b:3, c:3, d:1, e:4, f:2, g:1} }
-        };
 
         let currentDept = departments[0];
         let currentSummaryScope = '全廠';
@@ -305,31 +245,46 @@
 
         window.renderDeptTable = function() {
             renderTabs();
+            const thead = document.getElementById('dept-table-head');
             const tbody = document.getElementById('dept-table-body');
             tbody.innerHTML = '';
             
             const deptData = globalSkillsData[currentDept] || {};
+            const persons = Object.keys(deptData);
             
-            if (Object.keys(deptData).length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="py-6 text-slate-400">目前尚無資料</td></tr>`;
+            if (persons.length === 0) {
+                thead.innerHTML = `<tr><th class="px-4 py-3 text-left">人員 / 技能代號</th><th class="px-4 py-3 text-right">操作管理</th></tr>`;
+                tbody.innerHTML = `<tr><td colspan="2" class="py-6 text-slate-400">目前尚無資料</td></tr>`;
                 renderSummary();
                 return;
             }
 
-            for (const [person, skills] of Object.entries(deptData)) {
+            // 動態抓取該部門第一位員工擁有的所有技能名稱作為動態欄位
+            const skillKeys = Object.keys(deptData[persons[0]]);
+
+            // 動態產生表頭 HTML
+            let headHtml = `<tr><th class="px-4 py-3 text-left">人員 / 技能代號</th>`;
+            skillKeys.forEach(k => {
+                headHtml += `<th class="px-4 py-3">${k}</th>`;
+            });
+            headHtml += `<th class="px-4 py-3 text-right">操作管理</th></tr>`;
+            thead.innerHTML = headHtml;
+
+            // 動態產生表格內容
+            persons.forEach(person => {
+                const skills = deptData[person];
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 cursor-pointer transition';
-                tr.onclick = () => fillForm(person, skills);
                 
                 let rowHtml = `<td class="px-4 py-3 font-bold text-slate-800 bg-slate-50 text-left">${person}</td>`;
-                ['a', 'b', 'c', 'd', 'e', 'f', 'g'].forEach(k => {
+                skillKeys.forEach(k => {
                     const val = parseInt(skills[k] || 1);
-                    rowHtml += `<td class="px-4 py-3"><span class="pie-chart pie-${val}" title="等級 ${val}"></span></td>`;
+                    rowHtml += `<td class="px-4 py-3"><span class="pie-chart pie-${val}" title="${k}：等級 ${val}"></span></td>`;
                 });
                 rowHtml += `<td class="px-4 py-3 text-right"><button onclick="event.stopPropagation(); deleteSkill('${person}')" class="text-xs text-rose-600 hover:text-rose-800 font-medium bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded transition">刪除</button></td>`;
                 tr.innerHTML = rowHtml;
                 tbody.appendChild(tr);
-            }
+            });
 
             renderSummary();
         }
@@ -339,29 +294,21 @@
             let totalScores = 0;
             let totalEntries = 0;
 
-            if (currentSummaryScope === '全廠') {
-                departments.forEach(dept => {
-                    const deptData = globalSkillsData[dept] || {};
-                    for (const person of Object.values(deptData)) {
-                        ['a', 'b', 'c', 'd', 'e', 'f', 'g'].forEach(k => {
-                            const val = parseInt(person[k] || 1);
+            const targetDepts = currentSummaryScope === '全廠' ? departments : [currentSummaryScope];
+            
+            targetDepts.forEach(dept => {
+                const deptData = globalSkillsData[dept] || {};
+                for (const personData of Object.values(deptData)) {
+                    for (const valStr of Object.values(personData)) {
+                        const val = parseInt(valStr || 1);
+                        if (val >= 1 && val <= 4) {
                             levelCounts[val]++;
                             totalScores += val;
                             totalEntries++;
-                        });
+                        }
                     }
-                });
-            } else {
-                const deptData = globalSkillsData[currentSummaryScope] || {};
-                for (const person of Object.values(deptData)) {
-                    ['a', 'b', 'c', 'd', 'e', 'f', 'g'].forEach(k => {
-                        const val = parseInt(person[k] || 1);
-                        levelCounts[val]++;
-                        totalScores += val;
-                        totalEntries++;
-                    });
                 }
-            }
+            });
 
             const avgScore = totalEntries > 0 ? (totalScores / totalEntries).toFixed(2) : 0;
             const summaryDiv = document.getElementById('matrix-summary');
@@ -396,18 +343,11 @@
                 const deptData = globalSkillsData[dept] || {};
                 const rows = [];
                 for (const [person, skills] of Object.entries(deptData)) {
-                    rows.push({
-                        "人員/技能": person,
-                        "a": skills.a,
-                        "b": skills.b,
-                        "c": skills.c,
-                        "d": skills.d,
-                        "e": skills.e,
-                        "f": skills.f,
-                        "g": skills.g
-                    });
+                    let rowObj = { "人員/技能": person };
+                    Object.assign(rowObj, skills);
+                    rows.push(rowObj);
                 }
-                const ws = XLSX.utils.json_to_sheet(rows.length > 0 ? rows : [{"人員/技能": "範例", "a":1, "b":1, "c":1, "d":1, "e":1, "f":1, "g":1}]);
+                const ws = XLSX.utils.json_to_sheet(rows.length > 0 ? rows : [{"人員/技能": "範例"}]);
                 XLSX.utils.book_append_sheet(wb, ws, dept);
             });
             XLSX.writeFile(wb, "工廠個人技能矩陣表_完整資料.xlsx");
@@ -435,15 +375,18 @@
                             json.forEach(row => {
                                 const personKey = row["人員/技能"] || row["人員"] || row["Name"];
                                 if (personKey) {
-                                    deptMap[personKey] = {
-                                        a: parseInt(row["a"] || 1),
-                                        b: parseInt(row["b"] || 1),
-                                        c: parseInt(row["c"] || 1),
-                                        d: parseInt(row["d"] || 1),
-                                        e: parseInt(row["e"] || 1),
-                                        f: parseInt(row["f"] || 1),
-                                        g: parseInt(row["g"] || 1)
-                                    };
+                                    let skillObj = {};
+                                    // 動態抓取 Excel 中所有欄位（排除人員欄位名稱）
+                                    Object.keys(row).forEach(col => {
+                                        if (col !== "人員/技能" && col !== "人員" && col !== "Name") {
+                                            let val = parseInt(row[col]);
+                                            // 確保數值在 1~4 之間，空值或非數字預設為 1
+                                            skillObj[col] = isNaN(val) ? 1 : Math.min(Math.max(val, 1), 4);
+                                        }
+                                    });
+                                    if (Object.keys(skillObj).length > 0) {
+                                        deptMap[personKey] = skillObj;
+                                    }
                                 }
                             });
 
@@ -459,7 +402,7 @@
                         await set(ref(db, 'lastUpdated'), serverTimestamp());
                         alert(`成功匯入！共比對並更新了 ${matchCount} 個相符的工作表。`);
                     } else {
-                        alert('匯入失敗：上傳的 Excel 中沒有任何工作表名稱與系統的 11 個部門相符！');
+                        alert('匯入失敗：上傳的 Excel 中沒有任何工作表名稱與系統的 12 個部門相符！');
                     }
                 } catch (err) {
                     alert('解析 Excel 檔案發生錯誤： ' + err.message);
@@ -482,45 +425,6 @@
             }).catch(err => {
                 alert('匯出圖片失敗： ' + err.message);
             });
-        }
-
-        window.fillForm = function(person, skills) {
-            document.getElementById('input-person').value = person;
-            document.getElementById('input-skill-a').value = skills.a;
-            document.getElementById('input-skill-b').value = skills.b;
-            document.getElementById('input-skill-c').value = skills.c;
-            document.getElementById('input-skill-d').value = skills.d;
-            document.getElementById('input-skill-e').value = skills.e;
-            document.getElementById('input-skill-f').value = skills.f;
-            document.getElementById('input-skill-g').value = skills.g;
-        }
-
-        window.resetForm = function() {
-            document.getElementById('skill-form').reset();
-        }
-
-        window.saveSkillData = async function(event) {
-            event.preventDefault();
-            const person = document.getElementById('input-person').value.trim();
-            const skills = {
-                a: parseInt(document.getElementById('input-skill-a').value),
-                b: parseInt(document.getElementById('input-skill-b').value),
-                c: parseInt(document.getElementById('input-skill-c').value),
-                d: parseInt(document.getElementById('input-skill-d').value),
-                e: parseInt(document.getElementById('input-skill-e').value),
-                f: parseInt(document.getElementById('input-skill-f').value),
-                g: parseInt(document.getElementById('input-skill-g').value)
-            };
-
-            const path = `skills/${currentDept}/${person}`;
-            try {
-                await set(ref(db, path), skills);
-                await set(ref(db, 'lastUpdated'), serverTimestamp());
-                alert('資料儲存成功！');
-                resetForm();
-            } catch (error) {
-                alert('儲存失敗： ' + error.message);
-            }
         }
 
         window.deleteSkill = async function(person) {
@@ -569,7 +473,8 @@
                 const dataRef = ref(db, 'skills');
                 const snapshot = await get(dataRef);
                 if (!snapshot.exists()) {
-                    await set(dataRef, defaultData);
+                    // 若資料庫無資料則寫入空結構或預設值
+                    await set(dataRef, {});
                     await set(ref(db, 'lastUpdated'), serverTimestamp());
                 }
 
