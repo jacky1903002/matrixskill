@@ -351,11 +351,32 @@
                 for (const [person, skillsObj] of Object.entries(deptData)) {
                     let rowObj = { "人員/技能": person };
                     if (skillsObj && typeof skillsObj === 'object') {
-                        Object.assign(rowObj, skillsObj);
+                        // 確保匯出物件中的數值明確轉型為 Number
+                        for (let [k, v] of Object.entries(skillsObj)) {
+                            let num = Number(v);
+                            rowObj[k] = isNaN(num) ? v : num;
+                        }
                     }
                     rows.push(rowObj);
                 }
                 const ws = XLSX.utils.json_to_sheet(rows.length > 0 ? rows : [{"人員/技能": "範例"}]);
+
+                // 強制將工作表中所有數值欄位（除了第一行標題與人員欄位外）的儲存格型別設為 'n' (Number)
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                for (let R = range.s.r; R <= range.e.r; ++R) {
+                    for (let C = range.s.c; C <= range.e.c; ++C) {
+                        const cellAddress = XLSX.utils.encode_cell({r: R, c: C});
+                        const cell = ws[cellAddress];
+                        if (cell && R > 0 && C > 0) { // 略過標題列與人員名稱欄
+                            let parsedNum = Number(cell.v);
+                            if (!isNaN(cell.v) && cell.v !== "") {
+                                cell.t = 'n'; // 設定型別為數值
+                                cell.v = parsedNum;
+                            }
+                        }
+                    }
+                }
+
                 XLSX.utils.book_append_sheet(wb, ws, dept);
             });
             XLSX.writeFile(wb, "工廠個人技能矩陣表_完整資料.xlsx");
@@ -399,7 +420,8 @@
                                     Object.keys(row).forEach(col => {
                                         if (col !== "人員/技能" && col !== "人員" && col !== "Name") {
                                             let safeCol = String(col).trim();
-                                            let val = parseInt(row[col]);
+                                            // 強制將匯入的值解析並轉換成數值格式
+                                            let val = parseInt(row[col], 10);
                                             if (!isNaN(val) && val >= 1 && val <= 4) {
                                                 skillObj[safeCol] = val;
                                             }
@@ -419,7 +441,6 @@
                     });
 
                     if (matchCount > 0) {
-                        // 先完全覆寫舊資料庫內容，確保舊的 a, b, c 殘留結構被清掉
                         await set(ref(db, 'skills'), null);
                         await set(ref(db, 'skills'), importedData);
                         await set(ref(db, 'lastUpdated'), serverTimestamp());
@@ -525,7 +546,7 @@
                 statusText.innerText = '線上連線中';
             } else {
                 dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
-                statusTest.innerText = '連線中斷';
+                statusText.innerText = '連線中斷';
             }
         });
     </script>
